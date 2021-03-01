@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="746ad16c-108c-469d-94da-4e8783abc704" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="question-1" doc:id="5eecd4fc-261a-4c55-9451-b5eea159754f" >
+		<http:listener doc:name="Listener" doc:id="49f8b6bf-bb93-4a3f-90fe-0db377297a6a" config-ref="HTTP_Listener_config" path="/answer-1">
+			<http:response statusCode="#[vars.status default 500]" />
+		</http:listener>
+		<ee:transform doc:name="mocking the input payload" doc:id="ebf3c236-9ba0-4ffa-9bdc-6fbb2238ea08" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{"employee":{"id":"A007","first_name":"Jan","last_name":"Doe"}}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="d1a46579-3207-40d2-ab2f-8ca67314504f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"EMPLOYEE ID" : payload.employee.id]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="status" ><![CDATA[%dw 2.0
+output application/java
+---
+201 as Number]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+	<flow name="questio-2" doc:id="90c087a7-fa88-4885-b94e-161e786bfa96" >
+		<http:listener doc:name="Listener" doc:id="3a21365c-52b1-4514-bf5c-756371442ef6" config-ref="HTTP_Listener_config" path="/answer-2"/>
+		<ee:transform doc:name="Transform Message" doc:id="d1be29fd-48bb-46ab-bc6e-9453bd79c7f8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+Mule::lookup('question-1', payload)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	
+	</flow>
+	<flow name="question-3" doc:id="10c43bd3-749e-4095-9ebd-ca17cb51d450" >
+		<http:listener doc:name="Listener" doc:id="1f28c085-16ec-4598-8ac6-1405592318fd" config-ref="HTTP_Listener_config" path="/answer-3"/>
+<ee:transform doc:name="Transform Message" >
+		<ee:message >
+			<ee:set-payload ><![CDATA[%dw 2.0
+import java!org::mycompany::utils::MyClass
+output application/json
+---
+{
+a: MyClass::camelcase("geeks_for_geeks")
+}]]></ee:set-payload>
+		</ee:message>
+	</ee:transform>
+	</flow>
+	<flow name="question-4.1" doc:id="354c0ff2-06f3-4d8c-ac48-34b8e6503d8e" >
+		<http:listener doc:name="Listener" doc:id="c1853df4-336a-49be-80d0-92c411e6fc5f" config-ref="HTTP_Listener_config" path="/answer-4.1"/>
+		<ee:transform doc:name="Transform Message" doc:id="6b500b01-00de-403e-bf0b-da41a214ea11" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Objects
+output application/json
+var a = {"employee":[{"id":"A007","first_name":"Jan","last_name":"Doe"},{"id":"A008","first_name":"R
+on","last_name":"David"},{"id":"A009","first_name":"Jane","last_name":"Kane"},{"id":"A010","fi
+rst_name":"Marsh","last_name":"Megan"},{"id":"A011","first_name":"Kelly","last_name":"Mitc
+h"},{"id":"A012","first_name":"Chris","last_name":"Vaste"}]}
+
+var b = [{"scoreBoard":[{"id":"A007","subjects":["Maths","English","Arts","Drawimgs"],"score":[80,75,89
+,100]},{"id":"A008","subjects":["Maths","English","Arts","Drawimgs"],"score":[70,85,69,90]},{"id":"A021","subjects":["Maths","English","Arts","Drawimgs"],"score":[90,87,77,95]}]}]
+
+
+
+var e= valuesOf(flatten(b.scoreBoard ++ a.employee) groupBy $.id)  
+
+
+
+---
+certificate : e map (item, firstInputValue) ->
+  {
+    id : item.id[0],
+    first_name: item.first_name[0],
+    last_name: item.last_name[0],
+    (b.scoreBoard map (item2, secondInputValue) -> {
+      MarksBySubjectWise : {"Maths" : item2.score[firstInputValue][secondInputValue],"English" : item2.score[firstInputValue][1] , "Arts": item2.score[firstInputValue][2] , "Drawings": item2.score[firstInputValue][3] }
+
+
+    })
+  }]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="question-4.2" doc:id="564d2420-2432-4f67-909a-70b03c188b01" >
+		<http:listener doc:name="Listener" doc:id="d52f0b21-250c-447e-beeb-042fd314e191" config-ref="HTTP_Listener_config" path="/answer-4.2"/>
+		<ee:transform doc:name="filtered the data based out of 1" doc:id="afa0c021-9091-468b-a9e2-9d803148b289" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var a = {"employee":[{"id":"A007","first_name":"Jan","last_name":"Doe"},{"id":"A008","first_name":"R
+on","last_name":"David"},{"id":"A009","first_name":"Jane","last_name":"Kane"},{"id":"A010","fi
+rst_name":"Marsh","last_name":"Megan"},{"id":"A011","first_name":"Kelly","last_name":"Mitc
+h"},{"id":"A012","first_name":"Chris","last_name":"Vaste"}]}
+
+var b =[ {"scoreBoard":[{"id":"A007","subjects":["Maths","English","Arts","Drawimgs"],"score":[80,75,89
+,100]},{"id":"A008","subjects":["Maths","English","Arts","Drawimgs"],"score":[70,85,69,90]},{"id
+":"A021","subjects":["Maths","English","Arts","Drawimgs"],"score":[90,87,77,95]}]}]
+
+
+---
+
+ {"certificate":   a.employee map (item, firstInputValue) ->
+  {
+    id : item.id,
+    first_name: item.first_name,
+    last_name: item.last_name,
+    (b.scoreBoard map (item2, secondInputValue) -> {
+      MarksBySubjectWise : {"Maths" : item2.score[firstInputValue][secondInputValue],"English" : item2.score[firstInputValue][1] , "Arts": item2.score[firstInputValue][2] , "Drawings": item2.score[firstInputValue][3] }
+
+
+    })
+  }}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="question-5" doc:id="277c10d6-7b58-4840-a0a3-a4c151a744a8" >
+		<http:listener doc:name="Listener" doc:id="e475933a-4c07-453e-96fb-5aa5dd7054b9" config-ref="HTTP_Listener_config" path="/answer-5"/>
+		<ee:transform doc:name="Transform Message" doc:id="00bdf4e6-d54d-48c0-bddf-698220344f9c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+fun prepareList(list:Array, maxSize: Number) = if(sizeOf(list) >= maxSize )
+list
+else
+prepareList(list ++ [(sizeOf(list) + 1) as Number],maxSize)
+---
+prepareList([],10)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
